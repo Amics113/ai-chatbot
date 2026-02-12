@@ -1,35 +1,28 @@
-import subprocess
+import requests
+import os
 
-MODEL_NAME = "llama3:8b"   # 🔁 make sure this matches `ollama list`
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+MODEL = "llama3-8b-8192"
 
-def generate_response(prompt: str, context: str = "") -> str:
-    full_prompt = f"""
-You are a helpful AI assistant.
+def generate_response(prompt: str, context: str):
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
 
-Context:
-{context}
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {"role": "system", "content": context},
+            {"role": "user", "content": prompt}
+        ]
+    }
 
-User:
-{prompt}
+    res = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers=headers,
+        json=payload,
+        timeout=60
+    )
 
-Answer clearly:
-""".strip()
-
-    try:
-        result = subprocess.run(
-            ["ollama", "run", MODEL_NAME],
-            input=full_prompt,
-            capture_output=True,
-            text=True,
-            timeout=120
-        )
-
-        output = result.stdout.strip()
-
-        if not output:
-            return "⚠️ Model returned empty response"
-
-        return output
-
-    except Exception as e:
-        return f"⚠️ Ollama error: {str(e)}"
+    return res.json()["choices"][0]["message"]["content"]

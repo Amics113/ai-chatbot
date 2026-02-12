@@ -1,9 +1,7 @@
 fastapi
 uvicorn
-requests
+pydantic
+python-multipart
 sentence-transformers
 faiss-cpu
-torch
-transformers
-peft
-bitsandbytes
+requests
