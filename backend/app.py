@@ -8,12 +8,9 @@ from backend.ollama_client import generate_response
 from backend.rag.retriever import retrieve_context
 from backend.memory.chat_memory import add_message, get_memory
 
-import os
-import uvicorn
-
 app = FastAPI()
 
-# Serve frontend files
+# Serve frontend
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 # ---------- PAGES ----------
@@ -53,17 +50,11 @@ class ChatRequest(BaseModel):
 def chat(req: ChatRequest):
     add_message(req.username, "User", req.prompt)
 
-    memory = get_memory(req.username)
     context = retrieve_context(req.prompt)
+    memory = get_memory(req.username)
     combined = f"{context}\n{memory}".strip()
 
     answer = generate_response(req.prompt, combined)
+
     add_message(req.username, "Bot", answer)
-
     return {"response": answer}
-
-# ---------- RENDER ENTRY POINT ----------
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("backend.app:app", host="0.0.0.0", port=port)

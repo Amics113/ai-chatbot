@@ -5,7 +5,7 @@ MEMORY_FILE = "backend/memory/chat_history.json"
 
 def _load():
     if not os.path.exists(MEMORY_FILE):
-        return {}  # ✅ DICT, not list
+        return {}
 
     with open(MEMORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -18,7 +18,7 @@ def add_message(username: str, role: str, message: str):
     data = _load()
 
     if username not in data:
-        data[username] = []  # ✅ works because data is dict
+        data[username] = []
 
     data[username].append({
         "role": role,
@@ -29,7 +29,6 @@ def add_message(username: str, role: str, message: str):
 
 def get_memory(username: str) -> str:
     data = _load()
-
     if username not in data:
         return ""
 

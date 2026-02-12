@@ -1,28 +1,32 @@
 import requests
-import os
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-MODEL = "llama3-8b-8192"
+# 🔁 Replace with your NGROK URL (updates when ngrok restarts)
+OLLAMA_URL = "https://YOUR_OLLAMA_NGROK_URL/api/generate"
 
-def generate_response(prompt: str, context: str):
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
+MODEL_NAME = "my-llama-lora"  # ✅ IMPORTANT: your LoRA model name
+
+def generate_response(prompt: str, context: str = "") -> str:
+    full_prompt = f"""
+You are an AI assistant.
+
+Context:
+{context}
+
+User:
+{prompt}
+
+Assistant:
+"""
 
     payload = {
-        "model": MODEL,
-        "messages": [
-            {"role": "system", "content": context},
-            {"role": "user", "content": prompt}
-        ]
+        "model": MODEL_NAME,
+        "prompt": full_prompt,
+        "stream": False
     }
 
-    res = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers=headers,
-        json=payload,
-        timeout=60
-    )
+    res = requests.post(OLLAMA_URL, json=payload, timeout=300)
 
-    return res.json()["choices"][0]["message"]["content"]
+    if res.status_code != 200:
+        return "❌ Ollama error"
+
+    return res.json().get("response", "").strip()
