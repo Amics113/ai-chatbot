@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RAG AI Chatbot</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    header {
+      background: #1f2937;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      position: relative;
+    }
+
+    #logout {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #chat {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #ffffff;
+    }
+
+    .message {
+      margin-bottom: 12px;
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      background: #2563eb;
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 0;
+    }
+
+    .bot {
+      background: #e5e7eb;
+      color: black;
+      margin-right: auto;
+      border-bottom-left-radius: 0;
+    }
+
+    #typing {
+      font-style: italic;
+      color: gray;
+      margin: 8px;
+      display: none;
+    }
+
+    #input-area {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: #f9fafb;
+    }
+
+    #prompt {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  RAG AI Chatbot
+  <span id="logout" onclick="logout()">Logout</span>
+</header>
+
+<div id="chat"></div>
+<div id="typing">Bot is typing...</div>
+
+<div id="input-area">
+  <input
+    id="prompt"
+    placeholder="Ask something..."
+    onkeydown="handleEnter(event)"
+  />
+  <button onclick="send()">Send</button>
+</div>
+
+<script>
+  const chat = document.getElementById("chat");
+  const input = document.getElementById("prompt");
+  const typing = document.getElementById("typing");
+
+  const username = localStorage.getItem("username");
+
+  if (!username) {
+    window.location.href = "/";
+  }
+
+  function addMessage(text, sender) {
+    const msg = document.createElement("div");
+    msg.className = "message " + sender;
+    msg.innerText = text;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  async function send() {
+    const prompt = input.value.trim();
+    if (!prompt) return;
+
+    addMessage("You: " + prompt, "user");
+    input.value = "";
+    typing.style.display = "block";
+
+    try {
+      const res = await fetch("/chat", {   // ✅ FIXED
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username,
+          prompt: prompt
+        })
+      });
+
+      const data = await res.json();
+      typing.style.display = "none";
+      addMessage("Bot: " + data.response, "bot");
+
+    } catch (err) {
+      typing.style.display = "none";
+      addMessage("Bot: ❌ Server error", "bot");
+    }
+  }
+
+  function handleEnter(event) {
+    if (event.key === "Enter") {
+      send();
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem("username");
+    window.location.href = "/";
+  }
+</script>
+
+</body>
+</html>

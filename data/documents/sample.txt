@@ -1,0 +1,2 @@
+RAG improves chatbot accuracy by retrieving relevant documents.
+Ollama runs LLMs locally.
