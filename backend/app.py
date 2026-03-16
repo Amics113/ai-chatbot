@@ -86,3 +86,6 @@ def chat(req: ChatRequest):
     add_message(req.username, "Bot", answer)
 
     return {"response": answer}
+@app.get("/health")
+def health():
+    return {"status": "running"}
