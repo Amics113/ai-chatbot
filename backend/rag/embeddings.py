@@ -1,7 +1,14 @@
-from sentence_transformers import SentenceTransformer
+import os
 import numpy as np
+import google.generativeai as genai
 
-model = SentenceTransformer("all-MiniLM-L6-v2")
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def embed_text(text: str):
-    return np.array([model.encode(text)])
+    result = genai.embed_content(
+        model="models/embedding-001",
+        content=text
+    )
+
+    vector = np.array(result["embedding"]).astype("float32")
+    return vector.reshape(1, -1)
