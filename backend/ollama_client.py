@@ -1,32 +1,44 @@
-import requests
+import google.generativeai as genai
+import os
 
-# 🔁 Replace with your NGROK URL (updates when ngrok restarts)
-OLLAMA_URL = "https://YOUR_OLLAMA_NGROK_URL/api/generate"
+# Get API key from environment variable
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-MODEL_NAME = "my-llama-lora"  # ✅ IMPORTANT: your LoRA model name
+# Configure Gemini
+genai.configure(api_key=GEMINI_API_KEY)
+
+# Model
+model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 def generate_response(prompt: str, context: str = "") -> str:
-    full_prompt = f"""
-You are an AI assistant.
+    """
+    Generate response using Gemini API
+    """
 
-Context:
+    full_prompt = f"""
+You are an intelligent AI assistant.
+
+BEHAVIOR RULES:
+- Use provided context ONLY if it helps answer the question.
+- Ignore irrelevant context.
+- Be accurate and logical.
+- Keep answers clear and natural.
+- Continue conversation smoothly.
+
+Conversation Memory:
 {context}
 
-User:
+User Question:
 {prompt}
 
-Assistant:
-"""
+Assistant Response:
+""".strip()
 
-    payload = {
-        "model": MODEL_NAME,
-        "prompt": full_prompt,
-        "stream": False
-    }
+    try:
+        response = model.generate_content(full_prompt)
+        return response.text.strip()
 
-    res = requests.post(OLLAMA_URL, json=payload, timeout=300)
-
-    if res.status_code != 200:
-        return "❌ Ollama error"
-
-    return res.json().get("response", "").strip()
+    except Exception as e:
+        print("Gemini error:", e)
+        return "⚠️ AI model is temporarily unavailable."

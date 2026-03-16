@@ -39,6 +39,14 @@
     {
       "role": "Bot",
       "message": "I'd be happy to help you!\n\nTo better understand what you need assistance with, could you please clarify or provide more context about the issue or problem you're facing? What's been going on that has left you feeling stuck or uncertain?\n\nRemember, I'm here to listen and offer guidance. Don't worry if your problem seems too big or too small \u00e2\u20ac\u201c I'll do my best to help you tackle it!\n\nWhat's on your mind, and how can I be of assistance today?"
+    },
+    {
+      "role": "User",
+      "message": "hello"
+    },
+    {
+      "role": "User",
+      "message": "hi"
     }
   ],
   "afransyed": [
