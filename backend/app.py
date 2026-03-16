@@ -10,24 +10,40 @@ from backend.memory.chat_memory import add_message, get_memory
 
 app = FastAPI()
 
-# Serve frontend
+# -----------------------------
+# Serve frontend static files
+# -----------------------------
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
-# ---------- PAGES ----------
+# -----------------------------
+# Health check (important for Render)
+# -----------------------------
+@app.get("/health")
+def health():
+    return {"status": "running"}
+
+# -----------------------------
+# PAGES
+# -----------------------------
 
 @app.get("/", response_class=HTMLResponse)
 def login_page():
-    return open("frontend/login.html", encoding="utf-8").read()
+    with open("frontend/login.html", encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/register", response_class=HTMLResponse)
 def register_page():
-    return open("frontend/register.html", encoding="utf-8").read()
+    with open("frontend/register.html", encoding="utf-8") as f:
+        return f.read()
 
 @app.get("/chat", response_class=HTMLResponse)
 def chat_page():
-    return open("frontend/index.html", encoding="utf-8").read()
+    with open("frontend/index.html", encoding="utf-8") as f:
+        return f.read()
 
-# ---------- AUTH ----------
+# -----------------------------
+# AUTHENTICATION
+# -----------------------------
 
 @app.post("/register")
 def register(username: str = Form(...), password: str = Form(...)):
@@ -40,21 +56,33 @@ def login(username: str = Form(...), password: str = Form(...)):
         return {"status": "ok"}
     raise HTTPException(status_code=401, detail="Invalid credentials")
 
-# ---------- CHAT API ----------
+# -----------------------------
+# CHAT API
+# -----------------------------
 
 class ChatRequest(BaseModel):
     username: str
     prompt: str
 
+
 @app.post("/chat")
 def chat(req: ChatRequest):
+
+    # Save user message
     add_message(req.username, "User", req.prompt)
 
+    # Retrieve context from RAG
     context = retrieve_context(req.prompt)
+
+    # Get conversation memory
     memory = get_memory(req.username)
-    combined = f"{context}\n{memory}".strip()
 
-    answer = generate_response(req.prompt, combined)
+    combined_context = f"{context}\n{memory}".strip()
 
+    # Generate AI response
+    answer = generate_response(req.prompt, combined_context)
+
+    # Save AI response
     add_message(req.username, "Bot", answer)
+
     return {"response": answer}
