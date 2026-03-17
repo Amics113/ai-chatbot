@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -10,39 +11,56 @@ from backend.memory.chat_memory import add_message, get_memory
 
 app = FastAPI()
 
-# Serve frontend static files
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
-# Health check (Render uses this)
+# -----------------------------
+# STATIC FILES
+# -----------------------------
+# Mount frontend folder only if it exists
+if os.path.exists("frontend"):
+    app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+
+# -----------------------------
+# HEALTH CHECK
+# -----------------------------
 @app.get("/health")
 def health():
     return {"status": "running"}
 
 
 # -----------------------------
-# PAGES
+# PAGE ROUTES
 # -----------------------------
 
 @app.get("/", response_class=HTMLResponse)
 def login_page():
-    with open("frontend/login.html", encoding="utf-8") as f:
-        return f.read()
+    path = "frontend/login.html"
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Login page not found</h1>"
 
 
 @app.get("/register", response_class=HTMLResponse)
 def register_page():
-    with open("frontend/register.html", encoding="utf-8") as f:
-        return f.read()
+    path = "frontend/register.html"
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Register page not found</h1>"
 
 
 @app.get("/chat", response_class=HTMLResponse)
 def chat_page():
-    with open("frontend/index.html", encoding="utf-8") as f:
-        return f.read()
+    path = "frontend/index.html"
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Chat page not found</h1>"
 
 
 # -----------------------------
-# AUTH
+# AUTH ROUTES
 # -----------------------------
 
 @app.post("/register")
@@ -59,7 +77,7 @@ def login(username: str = Form(...), password: str = Form(...)):
 
 
 # -----------------------------
-# CHAT API
+# CHAT REQUEST MODEL
 # -----------------------------
 
 class ChatRequest(BaseModel):
@@ -67,19 +85,28 @@ class ChatRequest(BaseModel):
     prompt: str
 
 
+# -----------------------------
+# CHAT API
+# -----------------------------
+
 @app.post("/chat")
 def chat(req: ChatRequest):
 
+    # Save user message
     add_message(req.username, "User", req.prompt)
 
+    # Retrieve RAG context
     context = retrieve_context(req.prompt)
 
+    # Get chat memory
     memory = get_memory(req.username)
 
     combined_context = f"{context}\n{memory}".strip()
 
+    # Generate AI response
     answer = generate_response(req.prompt, combined_context)
 
+    # Save bot reply
     add_message(req.username, "Bot", answer)
 
     return {"response": answer}
